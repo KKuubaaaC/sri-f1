@@ -6,13 +6,12 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.jms.annotation.JmsListener;
-import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
 
 import edu.pja.sri.f1system.model.AlertSeverity;
 import edu.pja.sri.f1system.model.CarTelemetry;
-import edu.pja.sri.f1system.model.DriverAlert;
 import edu.pja.sri.f1system.model.MechanicsAlert;
+import edu.pja.sri.f1system.router.AlertRouterService;
 import edu.pja.sri.f1system.util.JmsDestinations;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,26 +32,12 @@ public class CarMonitor {
 	private static final double TYRE_HI_WARN = 30.0;
 	private static final double TYRE_HI_CRIT = 32.0;
 
-	private final JmsTemplate jmsTemplate;
+	private final AlertRouterService alertRouterService;
 
 	@JmsListener(destination = JmsDestinations.TELEMETRY_TOPIC, containerFactory = "topicConnectionFactory")
 	public void onTelemetry(CarTelemetry t) {
 		for (MechanicsAlert alert : analyzeThresholds(t)) {
-			jmsTemplate.convertAndSend(JmsDestinations.MECHANICS_ALERT_QUEUE, alert);
-			log.info("[CAR-MONITOR] Routed {} alert to mechanics: {}={}",
-					alert.getSeverity(), alert.getParameter(), alert.getValue());
-
-			if (alert.getSeverity() == AlertSeverity.CRITICAL) {
-				DriverAlert driverAlert = DriverAlert.builder()
-						.alertId(UUID.randomUUID().toString())
-						.carId(t.getCarId())
-						.message(alert.getMessage())
-						.requiresPitStop(true)
-						.timestamp(LocalDateTime.now())
-						.build();
-				jmsTemplate.convertAndSend(JmsDestinations.DRIVER_ALERT_QUEUE, driverAlert);
-				log.info("[CAR-MONITOR] Routed CRITICAL to DRIVER: {}", alert.getParameter());
-			}
+			alertRouterService.route(alert);
 		}
 	}
 
