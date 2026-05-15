@@ -135,14 +135,4 @@ The embedded broker and listeners start with the application. Default HTTP port 
 - Pit-stop requests: **15 s** interval, **5 s** initial delay (`PitStopRequestProducer`), **blocking** `convertSendAndReceive` (by design — request–reply on one thread).
 - **Thread pool** for `@Scheduled` tasks is configured in **`SchedulerConfig`** so a blocking pit-stop wait does not starve other scheduled jobs.
 
----
 
-## Academic context
-
-Implements the **graded part** of distributed systems lab **#4 (JMS)** under Spring: telemetry broadcast, **two independent** telemetry consumers, **message routing** to mechanics and conditionally to the driver, and **request–reply** for pit-stop approval — aligned with **Spring Boot 4.x** and **Jackson 3** migration notes from the course materials.
-
----
-
-## License / course use
-
-University coursework — see module regulations for reuse and attribution.
